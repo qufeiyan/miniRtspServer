@@ -28,6 +28,21 @@ pub fn find_nalu(data: &[u8]) -> Option<&[u8]> {
     None
 }
 
+/// Get the index of `needle` in `haystack`.
+fn get_index(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    let haystack_ptr = haystack.as_ptr();
+    let needle_ptr = needle.as_ptr();
+
+    // Safety: The caller must ensure that `needle` is within `haystack`.
+    unsafe {
+        if needle_ptr >= haystack_ptr && needle_ptr < haystack_ptr.add(haystack.len()) {
+            Some(needle_ptr.offset_from(haystack_ptr) as usize)
+        } else {
+            None
+        }
+    }
+}
+
 pub struct NaluIterator {
     file: File,
     buffer: Vec<u8>, 
@@ -63,9 +78,11 @@ impl Iterator for NaluIterator {
             
             let data = &self.buffer[..bytes_read];
             if let Some(nalu) = find_nalu(data) { 
-                log::info!("Found NALU of length: {}", nalu.len());
                 log::debug!("nalu: {:#?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
-                self.file.seek(SeekFrom::Current((nalu.len() as i64) - (bytes_read as i64))).ok()?;
+                
+                let start_index = get_index(data, nalu).expect("NALU not found in buffer"); 
+                let pos = self.file.seek(SeekFrom::Current(((nalu.len() + start_index) as i64) - (bytes_read as i64))).ok()?;
+                log::info!("Found NALU of length: {}, bytes_read: {}, pos after seek: {}", nalu.len(), bytes_read, pos);
 
                 return Some(nalu.to_vec());
             }

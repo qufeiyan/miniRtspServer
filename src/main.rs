@@ -4,7 +4,7 @@ use std::{
         BufRead, BufReader, Write
     }, net::{
         IpAddr, TcpListener, TcpStream, UdpSocket
-    }, sync::{Arc, Mutex}, thread, time::Duration};
+    }, process::exit, sync::{Arc, Mutex}, thread, time::Duration};
 use rtsp::{connection::Connection, request::RtspRequest};
 use media::session::{Session, Track};
 use rtsp::router::Router;
@@ -77,7 +77,7 @@ impl<'a> Server<'a> {
                                     break;
                                 }
                             }
-                            log::debug!("send nalu: {:?}", nalu); 
+                            
                             rtp_sink.lock().unwrap().handle(&nalu, Box::new(stream_clone.try_clone().unwrap()));
                         }
                     });
