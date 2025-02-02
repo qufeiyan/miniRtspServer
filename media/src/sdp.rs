@@ -92,7 +92,7 @@ impl<'a> From<H265Fmtp> for String {
     fn from(fmtp: H265Fmtp) -> Self {
         let sps_str = general_purpose::STANDARD.encode(&fmtp.sps);
         let pps_str = general_purpose::STANDARD.encode(&fmtp.pps);
-        let vps_str = general_purpose::STANDARD.encode(&fmtp.sps);
+        let vps_str = general_purpose::STANDARD.encode(&fmtp.vps);
 
         let h265_fmtp = format!(
             "{} sprop-vps={}; sprop-sps={}; sprop-pps={}",

@@ -50,7 +50,7 @@ impl<'a> Server<'a> {
                     let session = Arc::new(Mutex::new(Session::new("session", Some(video_file), None, tx)));
                     // 为每个连接创建一个新的线程
                     let session_clone = Arc::clone(&session);
-                    let mut stream_clone = stream.try_clone().unwrap();
+                    let stream_clone = stream.try_clone().unwrap();
                     let handle_connect = thread::spawn( move || {
                         let connection = Connection::new(stream, session_clone);
                         Server::handle_client(connection);
@@ -78,7 +78,7 @@ impl<'a> Server<'a> {
                                 }
                             }
                             log::debug!("send nalu: {:?}", nalu); 
-                            rtp_sink.lock().unwrap().handle(&nalu, &mut stream_clone);
+                            rtp_sink.lock().unwrap().handle(&nalu, Box::new(stream_clone.try_clone().unwrap()));
                         }
                     });
 
@@ -124,7 +124,7 @@ fn main() {
         Some(ip) => {
             let ip_with_port = format!("{}:5544", ip);
             let home_dir = std::env::var("HOME").expect("HOME not set");
-            let relative_path = "coder/rust/miniRtspServer/test.h264";
+            let relative_path = "coder/rust/miniRtspServer/test.h265";
             let stream_file = format!("{}/{}", home_dir, relative_path);
             let video_file = Arc::new(stream_file);
             let server = Server::new(&ip_with_port, video_file);

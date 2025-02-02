@@ -1,3 +1,7 @@
+use std::io::Write;
+use crate::codec::parse::NaluIterator;
+pub const RTP_MAX_PACKET_SIZE: usize = 1400;
+
 #[derive(Debug, Clone)]
 pub struct RtpPacket {
     version: u8,
@@ -45,4 +49,9 @@ impl RtpPacket {
         bytes.extend(&*self.payload);
         bytes
     }
+}
+
+pub trait RtpSink: Send + Sync {
+    fn handle(&mut self, nalu: &[u8], write_stream: Box<dyn Write>);
+    fn get_nalu_iter(&self) -> NaluIterator;
 }

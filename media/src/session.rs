@@ -1,5 +1,5 @@
 use std::{collections::HashMap, fs::File, sync::{mpsc::Sender, Arc, Mutex}};
-use crate::{codec::parse::ParameterSet, rtp::rtp_h264::RtpSink, sdp::{Fmtp, H264Fmtp, H265Fmtp, MediaInfo, RtpMap, SDP}};
+use crate::{codec::parse::ParameterSet, rtp::{rtp_h264::RtpSinkH264, rtp_h265::RtpSinkH265, rtp_packet::RtpSink}, sdp::{Fmtp, H264Fmtp, H265Fmtp, MediaInfo, RtpMap, SDP}};
 use crate::codec::parse;
 
 pub enum Track{
@@ -31,7 +31,7 @@ impl From<Track> for String {
 pub struct Session<'a> {
     session_name: &'a str,  // used for identifying the session.
     pub session_id: String,     // used for setupting the session, not session id in sdp.
-    pub rtp_sinks: HashMap<String, Arc<Mutex<Box<RtpSink>>>>, // used for sending the rtp packets. key is the track id.
+    pub rtp_sinks: HashMap<String, Arc<Mutex<Box<dyn RtpSink>>>>, // used for sending the rtp packets. key is the track id.
     fmtps: HashMap<String, Fmtp>, // used for setting the fmtp.
     rtpmaps: HashMap<String, RtpMap>, // used for setting the rtpmap.
     video_file: Option<Arc<String>>, // used for storing the video file.
@@ -66,18 +66,30 @@ impl<'a> Session<'a> {
         
         // let file = "./test.h264";
         let file = session.video_file.as_ref().unwrap().clone();
-        let rtp_sink = Box::new(RtpSink::new(file, 96, 90000, 25, 12345678, true));
+        let clock_rate = 90000;
+        let fps = 25;
+        let ssrc = 12345678;
+        match session.fmtps.get(&String::from(Track::Video)).unwrap() {
+            Fmtp::H264(fmtp) => {
+                let rtp_sink: Box<dyn RtpSink> = Box::new(RtpSinkH264::new(file, fmtp.payload_type as u8, clock_rate, fps, ssrc, true));
+                let rtp_sink_arc = Arc::new(Mutex::new(rtp_sink));
+                session.add_rtp_sink(Track::Video, Arc::clone(&rtp_sink_arc));
+            }
+            Fmtp::H265(fmtp) => {
+                let rtp_sink: Box<dyn RtpSink> = Box::new(RtpSinkH265::new(file, fmtp.payload_type as u8, clock_rate, fps, ssrc, true));
+                let rtp_sink_arc = Arc::new(Mutex::new(rtp_sink));
+                session.add_rtp_sink(Track::Video, Arc::clone(&rtp_sink_arc));
+            }
+        };
 
-        let rtp_sink_arc = Arc::new(Mutex::new(rtp_sink));  
-        session.add_rtp_sink(Track::Video, Arc::clone(&rtp_sink_arc));
         session
     }
 
-    fn add_rtp_sink(&mut self, track: Track, rtp_sink: Arc<Mutex<Box<RtpSink>>>) {
+    fn add_rtp_sink(&mut self, track: Track, rtp_sink: Arc<Mutex<Box<dyn RtpSink>>>) {
         self.rtp_sinks.insert(String::from(track), rtp_sink);
     }
 
-    pub fn get_rtp_sink(&mut self, track: Track) -> &mut Arc<Mutex<Box<RtpSink>>> {
+    pub fn get_rtp_sink(&mut self, track: Track) -> &mut Arc<Mutex<Box<dyn RtpSink>>> {
         let rtpsink = self.rtp_sinks.get_mut(&String::from(track)).unwrap();
         rtpsink
     }
