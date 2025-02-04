@@ -78,11 +78,12 @@ impl Iterator for NaluIterator {
             
             let data = &self.buffer[..bytes_read];
             if let Some(nalu) = find_nalu(data) { 
-                log::debug!("nalu: {:#?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
+                // log::debug!("nalu: {:?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
+                log::debug!("nalu: {:x?}", nalu);
                 
                 let start_index = get_index(data, nalu).expect("NALU not found in buffer"); 
                 let pos = self.file.seek(SeekFrom::Current(((nalu.len() + start_index) as i64) - (bytes_read as i64))).ok()?;
-                log::info!("Found NALU of length: {}, bytes_read: {}, pos after seek: {}", nalu.len(), bytes_read, pos);
+                log::debug!("Found NALU of length: {}, bytes_read: {}, pos after seek: {}", nalu.len(), bytes_read, pos);
 
                 return Some(nalu.to_vec());
             }
@@ -126,8 +127,8 @@ pub fn parse_h264(file: &mut File) -> ParameterSet {
         let data = &buffer[..bytes_read];
         match find_nalu(data) {
             Some(nalu) => {
-                println!("Found NALU of length: {}", nalu.len());
-                // println!("nalu: {:#?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
+                log::info!("Found NALU of length: {}", nalu.len());
+                // log::debug!("nalu: {:#?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
                 // Process the NALU data here, exaple: parse SPS/PPS for H264
                 let nalu_type = nalu[0] & 0x1f;
                 if nalu_type == 7 {
@@ -135,10 +136,11 @@ pub fn parse_h264(file: &mut File) -> ParameterSet {
                 } else if nalu_type == 8 {
                     pps = nalu.to_vec();
                 }
-                file.seek(SeekFrom::Current((nalu.len() as i64) - (bytes_read as i64))).unwrap();
+                let start_index = get_index(data, nalu).expect("NALU not found in buffer"); 
+                let _ = file.seek(SeekFrom::Current(((nalu.len() + start_index) as i64) - (bytes_read as i64))).unwrap();   
             }
             None => {
-                println!("No NALU found in this chunk");
+                log::debug!("No NALU found in this chunk");
             }
         }
         if !sps.is_empty() && !pps.is_empty() {
@@ -169,8 +171,8 @@ pub fn parse_h265(file: &mut File) -> ParameterSet {
         let data = &buffer[..bytes_read];
         match find_nalu(data) {
             Some(nalu) => {
-                println!("Found NALU of length: {}", nalu.len());
-                // println!("nalu: {:#?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
+                log::info!("Found NALU of length: {}", nalu.len());
+                // log::debug!("nalu: {:#?}", nalu.iter().map(|x| format!("{:x}", x)).collect::<Vec<String>>());
                 // Process the NALU data here, exaple: parse VPS/SPS/PPS for H265
                 let nalu_type = (nalu[0] & 0x7e) >> 1;
                 match nalu_type {
@@ -179,10 +181,11 @@ pub fn parse_h265(file: &mut File) -> ParameterSet {
                     34 => pps = nalu.to_vec(),
                     _ => (),
                 };
-                file.seek(SeekFrom::Current((nalu.len() as i64) - (bytes_read as i64))).unwrap();
+                let start_index = get_index(data, nalu).expect("NALU not found in buffer"); 
+                let _ = file.seek(SeekFrom::Current(((nalu.len() + start_index) as i64) - (bytes_read as i64))).unwrap();   
             }
             None => {
-                println!("No NALU found in this chunk");
+                log::debug!("No NALU found in this chunk");
             }
         }
         if !vps.is_empty() && !sps.is_empty() && !pps.is_empty() {

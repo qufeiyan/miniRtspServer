@@ -2,6 +2,10 @@ use std::{collections::HashMap, fs::File, sync::{mpsc::Sender, Arc, Mutex}};
 use crate::{codec::parse::ParameterSet, rtp::{rtp_h264::RtpSinkH264, rtp_h265::RtpSinkH265, rtp_packet::RtpSink}, sdp::{Fmtp, H264Fmtp, H265Fmtp, MediaInfo, RtpMap, SDP}};
 use crate::codec::parse;
 
+const RTP_PAYLOAD_TYPE_H26X: u8 = 96; // 媒体类型-视频
+const RTP_PAYLOAD_TYPE_AAC: u8 = 97;  // 媒体类型-音频
+const RTP_PAYLOAD_TYPE_PCMA: u8 = 8;  // 媒体类型-音频
+
 pub enum Track{
     Audio,
     Video,    
@@ -134,7 +138,7 @@ impl<'a> Session<'a> {
             Fmtp::H265(_) => "H265",
         };
         let mut rtpmap = RtpMap::default();
-        rtpmap.payload_type = 96;
+        rtpmap.payload_type = RTP_PAYLOAD_TYPE_H26X as u16;
         rtpmap.encoding_name = encoding_name.to_string(); 
         rtpmap.clock_rate = 90000;
         rtpmap.encoding_param = String::from("");

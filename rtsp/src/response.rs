@@ -70,6 +70,7 @@ impl<'a> RtspResponse<'a> {
         response.status_text = match response.status_code {
             "200" => "OK".into(),
             "400" => "Bad Request".into(),
+            "401" => "Unauthorized".into(),
             "404" => "Not Found".into(),
             "500" => "Internal Server Error".into(),
             _ => "Not Found".into(),
@@ -167,7 +168,7 @@ mod tests {
         };
         let rtsp_string: String = response_expected.into();
         let actual_string =
-            "RTSP/1.0 200 OK\r\nContent-Type:application/sdp\r\nContent-Length: 4\r\n\r\nxxxx"
+            "RTSP/1.0 200 OK\r\nContent-Type: application/sdp\r\nContent-Length: 4\r\n\r\nxxxx"
                 .to_string();
         assert_eq!(rtsp_string, actual_string);
     }

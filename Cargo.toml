@@ -12,3 +12,4 @@ bytes = "1.8.0"
 chrono = "0.4.38"
 rtsp = { path = "./rtsp" }
 media = { path = "./media" }
+md5 = "0.7.0"

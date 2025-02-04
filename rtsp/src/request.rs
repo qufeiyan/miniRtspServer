@@ -12,6 +12,21 @@ pub enum Method {
     Uninitialized,
 }
 
+impl From<&Method> for String {
+    fn from(method: &Method) -> Self {
+        match method {
+            Method::Options => "OPTIONS".to_string(),
+            Method::Describe => "DESCRIBE".to_string(),
+            Method::Announce => "ANNOUNCE".to_string(),
+            Method::Setup => "SETUP".to_string(),
+            Method::Play => "PLAY".to_string(),
+            Method::Pause => "PAUSE".to_string(),
+            Method::Teardown => "TEARDOWN".to_string(),
+            Method::Uninitialized => "Uninitialized".to_string(),
+        }
+    }   
+}
+
 impl From<&str> for Method {
     fn from(s: &str) -> Self {
         match s {
@@ -102,7 +117,7 @@ fn process_req_line(s: &str) -> (Method, Url, Version) {
 }
 
 fn process_header_line(s: &str) -> (String, String) {
-    let mut header_items = s.split(':');
+    let mut header_items = s.split(": ");
     let mut key = String::from("");
     let mut value = String::from("");
     if let Some(k) = header_items.next() {

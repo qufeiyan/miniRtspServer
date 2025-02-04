@@ -1,1 +1,24 @@
-/target
+Rust编译生成的文件
+target/
+
+# Cargo构建缓存
+cargo-build-std/
+cargo-build-dependencies/
+
+# 依赖项
+deps/
+
+# 运行时生成的文件
+*.log
+
+# 操作系统特定的文件
+.DS_Store
+
+# IDE生成的文件
+.idea/
+.vscode/
+
+# 其他临时文件
+*.swp
+*.swo
+*~
