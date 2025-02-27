@@ -4,7 +4,7 @@ use std::{
         BufRead, BufReader, Write
     }, net::{
         IpAddr, TcpListener, TcpStream, UdpSocket
-    }, process::exit, sync::{Arc, Mutex}, thread, time::Duration};
+    }, sync::{Arc, Mutex}, thread, time::Duration};
 use rtsp::{connection::Connection, request::RtspRequest};
 use media::session::{Session, Track};
 use rtsp::router::Router;

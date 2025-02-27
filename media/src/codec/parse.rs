@@ -99,7 +99,6 @@ impl Iterator for NaluIterator {
     }
 }
 
-
 pub enum ParameterSet{
     H264{
         sps: Vec<u8>,
